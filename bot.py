@@ -10,27 +10,36 @@ from telegram.ext import (
 )
 
 TOKEN = os.environ["TOKEN"]
-STICKER_ID = os.environ["STICKER_ID"]
 
 
 async def handle_message(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
-    if not update.message or not update.message.text:
+    if not update.message:
+        return
+
+    # Если пришёл стикер — выводим его ID в логи Railway
+    if update.message.sticker:
+        sticker_id = update.message.sticker.file_id
+        print(f"STICKER_ID = {sticker_id}")
+        return
+
+    # Если пришёл текст — проверяем слово "да"
+    if not update.message.text:
         return
 
     text = update.message.text
 
     if re.search(r"(?<!\w)да(?!\w)", text, re.IGNORECASE):
-        await update.message.reply_sticker(STICKER_ID)
+        print('Получено слово "да", но STICKER_ID пока не настроен.')
 
 
 app = Application.builder().token(TOKEN).build()
 
 app.add_handler(
     MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
+        filters.ALL & ~filters.COMMAND,
         handle_message
     )
 )
